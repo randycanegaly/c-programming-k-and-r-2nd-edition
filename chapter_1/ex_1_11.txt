@@ -1,0 +1,10 @@
+The tests that I would do and the inputs that would best uncover bugs:
+- one input, new line only
+- one word, with newline
+- space only, then newline
+- tab only, then newline
+- a series of words with spaces separating them
+- a series of words with tabs separating them
+- a series of words with a mix of spaces and tabs separating them
+- no input, just EOF
+- some spaces, then a word
