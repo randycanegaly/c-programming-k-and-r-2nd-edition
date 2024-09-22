@@ -21,7 +21,7 @@ int main(void) {
 
 
 void itoa_width(int n, char s[], int w) {//convert an int into a string with those digits
-    int i, sign, j, blanks_needed;
+    int i, sign, j;
 
     sign = n;
 
@@ -32,13 +32,12 @@ void itoa_width(int n, char s[], int w) {//convert an int into a string with tho
     } while ((n /= 10) != 0);
     if (sign < 0)
         s[i++] = '-';
-    //s[i] = '\0';//it's backwards at this point. 
+    //it's backwards at this point. 
     //after reverse, if w is 10, then we would want 129 to come out as "^^^^^^^129", 
     //where ^ is my marker for a space
     //so, before reversing, it should look like "921^^^^^^^"
     //that means we just need to figure out how many spaces need to get to the minimum field width and tack that
     //many blanks on the end
-    blanks_needed = w - i;
     for (j = i; j < w; j++) {
         s[j] = ' ';
     }
