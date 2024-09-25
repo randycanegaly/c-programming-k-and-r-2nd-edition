@@ -63,9 +63,3 @@ double atof(char s[]) {
     
     return result;
 }
-
-
-
-
-
-
