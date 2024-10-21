@@ -34,8 +34,6 @@ struct key {
 int getword(char *, int);
 int binsearch(char *, struct key *, int);
 
-int in_big_comment = 0;
-
 /* count C keywords */
 int main (void) {
     int n;
@@ -72,60 +70,39 @@ int binsearch(char *word, struct key tab[], int n) { //a binary search
 }
 
 /* getword: get next word or character from input */
-//skip lines that start with // or #
-
-/*
-param word: pointer to the first char element in the word array. A "side effect" of this
-function is that the word array is populated with the word found
-param lim: maximum size of word to be seen
-return: first character of the word array
-
-How it works:
-- skip spaces
-- 
-*/
-int getword(char *word, int lim) {//the address to the first character in the word array is passed by value - a pointer
-    //this allows this function to move that pointer around and assign values to "the thing pointed to" by the pointer
-    //this is in effect, "pass by reference". Changes to the word array made inside this function persist outside to the caller
-    int c, d, getch(void);
-    void ungetch(int);//going to use these two functions in here, have to declare them first
+int getword(char *word, int lim) {
+    int c, d, comment(void), getch(void);
+    void ungetch(int);
     char *w = word;
-    
-    
-
-
-    while (isspace(c = getch()) && c == '#') //skip white space and also skip '#' to handle keywords in preprocessor directives
-        ;
-    if(c == '/') {
-        if((d = getch()) == '/' || d == '*') {
-            while((d = getch()) != '\n')
-                ;
-        in_big_comment = 1;            
-        } else
-            ungetch(c);
-    }
  
-    if (c != EOF) //not a space and not end of file
-        *w++ = c; //set element at w to c and then advance pointer to next w location
-    /*if (c == '_') { //see an underscore. everything after it can't be a keyword, this handles words starting with '_'
-        for ( ; --lim > 0; w++)
-            if(!isspace(c = getch()))
-                ;
-            else
-                ungetch(c);
-    }*/
-    if (!isalpha(c) && c != '_') { //if that c is not an alpha, then we can't be looking at a keyword, terminate it and return c
-        *w = '\0';
-        return c;
-    }
-    for ( ; --lim > 0; w++) //walk the word up to the point that a non-alpha or non-number character is seen, always setting value at the advancing w pointer to that character
-        if (!isalnum(*w = getch()) && *w != '_') { //get the next character, if it's not an alpha, number, or underscore push that too far character back
-            //anything not pushed back will be included in the word so '_' included in the word will fail the strcmp against keywords
-            ungetch(*w); //at this point, have gone one too far. put it back
-            break; //exit the loop, done building the word string
+    while (isspace(c = getch())) //skip spaces
+        ;
+    if (c != EOF)
+        *w++ = c;//gone past last space, set char to first element in word
+    if (isalpha(c) || c == '_' || c == '#') { //see alpha, underscore or #
+        for ( ; --lim > 0; w++) //walk elements of word
+            if (!isalnum(*w = getch()) && *w != '_') { //assign next char to that word element until not an alpha, num or underscore
+                ungetch(*w);//went too far, put one back
+                break;
         }
-    *w = '\0'; //past the end of the word, terminate the string
-    return word[0];
+    } else if (c == '\'' || c == '"') {// see a quote
+        for ( ; --lim > 0; w++) //walk elements of word
+            if ((*w = getch()) == '\\') //if see continuation slash
+                *++w = getch(); //increment to next word element and set it to the next character retrievedd
+            else if (*w == c) { //if see matching end quote, stop loop
+                w++;
+                break;
+            } else if (*w == EOF) //if see end of file, stop loop
+                break;
+    } else if (c == '/')
+        if ((d = getch()) == '*') //saw a /* to start a comment
+            c = comment(); //in a comment now, proceed accordingly
+        else
+            ungetch(d); //didn't see the expected *, so put the / back
+    *w = '\0';
+    return c;
+        
+
 }
 
 #define BUFSIZE 100
@@ -140,4 +117,16 @@ void ungetch(int c) {
         printf("ungetch: too many characters\n");
     else
         buf[bufp++] = c;
+}
+
+int comment(void) {
+    int c;
+
+    while ((c = getch()) != EOF) //get characters until end of file
+        if(c == '*')
+            if ((c = getch()) == '/') //saw the ending */ characters, stop loop
+                break;
+            else
+                ungetch(c); //didn't see expected /, put it back
+    return c;
 }
