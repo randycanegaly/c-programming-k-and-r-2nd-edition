@@ -51,14 +51,13 @@ struct tnode {
 };
 
 char *types[] = {"char", "int", "float"};
-int num_types = 3;
 
 /* word frequency count */
 int main(void) {
     struct tnode *root;
     char word[MAXWORD];
-    int i;
-    char *w;
+    int num_types = 3;
+    char **t;
 
     root = NULL;
     while (getword(word, MAXWORD) != EOF) {
@@ -66,16 +65,17 @@ int main(void) {
         //is the word char, int or float?
             //yes, skip it, get the next word. that is the word to pass to addtree
 
-        for (i = 0; i < num_types; i++) {
-            w = *types;
-            if (strcmp(word, w) == 0)
+        t = types;
+        for ( ; --num_types >= 0; t++) {
+            printf("num_types: %d, types: %s\n", num_types, *t);
+            if (strcmp(word, *types) == 0)
                 if (getword(word, MAXWORD) != EOF && isalpha(word[0]))
                     root = addtree(root, word);
                 else
                     if (isalpha(word[0]))
                         root = addtree(root, word);
-            ++w; 
         }
+        num_types = 3;//TO DO - fix this. it's a hack because num_types goes to 0 in the for loop and is 0 on the next round of the while loop
     }
     
     treeprint(root);
