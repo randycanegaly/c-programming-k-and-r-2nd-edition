@@ -54,12 +54,22 @@ struct tnode {
 int main(void) {
     struct tnode *root;
     char word[MAXWORD];
+    int i;
 
     root = NULL;
     while (getword(word, MAXWORD) != EOF) {
-        if (isalpha(word[0]))
-            root = addtree(root, word);
+        //have a word at this point
+        //is the word char, int or float?
+            //yes, skip it, get the next word. that is the word to pass to addtree
+
+        if (strcmp("char", word) == 0)
+            if (getword(word, MAXWORD) != EOF && isalpha(word[0]))
+                root = addtree(root, word);
+        else 
+            if (isalpha(word[0]))
+                root = addtree(root, word);
     }
+    
     treeprint(root);
     return 0;
 }
