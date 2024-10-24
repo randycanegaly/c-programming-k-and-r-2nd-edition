@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define MAXWORD 100
+#define YES     1
+#define NO      0
 
 /*
  Write a program that reads a C program and prints in 
@@ -10,125 +13,88 @@
  identical in the first 6 characters, but differ somewhat 
  thereafter. Don't count words within strings and comments.
  Make 6 a parameter that can be set from the command line.
- */
-
-/*
-1. Identify type variable grouping
-2. Pull out the variable
-3. Run tree as is but making word the variable pulled
-4. Modify addtree so that it will only compare the first 6 characters
-    when making comparisons
-5. Change to take "6" from the command line 
+ 
+ Consulted "The C Answer Book" for help with this exercise.
 */
 
-
-/*
- *How to find groups of variable names? They will be at the start of a line,
- in a declaration of the form - type variable
- Pick a few types to work with:
- char
- int
- float
- First, collect simple, identical character names
- Where would such code go? in main() AA
- * 
-*/
-
-
-
-
-
-
-struct tnode *addtree(struct tnode *, char *);
-void treeprint(struct tnode *);
+struct tnode *addtreex(struct tnode *, char *, int, int *);
+void treexprint(struct tnode *);
 int getword(char *, int);
 
 struct tnode {
     char *word;
-    int count;
+    int match;
     struct tnode *left;
     struct tnode *right;
 };
 
-char *types[] = {"char", "int", "float"};
-
-/* word frequency count */
-int main(void) {
+int main(int argc, char *argv[]) {
     struct tnode *root;
     char word[MAXWORD];
-    int num_types;
-    char **t;
+    int found = NO;
+    int num;
 
+    num = (--argc && (*++argv)[0] == '-') ? atoi(argv[0] + 1) : 3;
     root = NULL;
     while (getword(word, MAXWORD) != EOF) {
-        //have a word at this point
-        //is the word char, int or float?
-            //yes, skip it, get the next word. that is the word to pass to addtree
-        //if one of the 3 type words is not seen, don't do anything with the word, skip it
-        t = types;
-        for ( num_types = 3; --num_types >= 0; t++) {
-            printf("num_types: %d, types: %s\n", num_types, *t);
-            if (strcmp(word, *t) == 0)
-                if (getword(word, MAXWORD) != EOF && isalpha(word[0]))
-                    root = addtree(root, word);
-        }
+        if (isalpha(word[0]) && strlen(word) >= num)
+            root = addtreex(root, word, num, &found);
+        found = NO;
     }
-    
-    treeprint(root);
+    treexprint(root);
     return 0;
 }
 
 struct tnode *talloc(void);
-char *mystrdup(char *);
+int compare(char *, struct tnode *, int, int *);
 
 /* addtree: add a node with w, at or below p */
-struct tnode *addtree(struct tnode *p, char *w) {
+struct tnode *addtreex(struct tnode *p, char *w, int num, int *found) {
     int cond;
 
     if (p == NULL) { //base case. this is a new word
         p = talloc(); //create a new node
-        p->word = mystrdup(w);
-        p->count = 1;
+        p->word = strdup(w);
+        p->match = *found;
         p->left = p -> right = NULL;
-    } else if ((cond = strcmp(w, p->word)) ==0)
-        p->count++;
-    else if (cond < 0)
-        p->left = addtree(p->left, w);
-    else
-        p->right = addtree(p->right, w);
+    } else if ((cond = compare(w, p, num, found)) == 0)
+        p->left = addtreex(p->left, w, num, found);
+    else if (cond > 0)
+        p->right = addtreex(p->right, w, num, found);
     return p;
 }
 
 /* getword: get next word or character from input */
 int getword(char *word, int lim) {
     int c, getch(void);
-    void ungetch(int);//going to use these two functions in here, have to declare them first
+    void ungetch(int);
     char *w = word;
 
-    while (isspace(c = getch())) //skip white space
+    while (isspace(c = getch()))
         ;
-    if (c != EOF) //not a space and not end of file
-        *w++ = c; //* and ++ have equal precedence and associate right to left. increment w pointer to next character, assign c to what the pointer points to
-    if (!isalpha(c)) { //if c is not an alpha, terminate the w string, return that character
+    if (c != EOF) 
+        *w++ = c; 
+    if (!isalpha(c)) { 
         *w = '\0';
     return c;
     }
-    for ( ; --lim > 0; w++) //walk the word up to the limit
-        if (!isalnum(*w = getch())) { //get the next character, if it's not an alpha or number, push that too far character back
+    for ( ; --lim > 0; w++)
+        if (!isalnum(*w = getch())) {
             ungetch(*w);
             break;
         }
-    *w = '\0'; //past the end of the word, terminate the string
+    *w = '\0';
     return word[0];
 }
 
-/* treeprint: in-order print of tree p */
-void treeprint(struct tnode *p)
+/* treexprint: in-order print of tree p */
+void treexprint(struct tnode *p)
 {
     if (p != NULL) {
-        treeprint(p->left);
-        printf("%4d %s\n", p->count, p->word);
-        treeprint(p->right);
+        treexprint(p->left);
+        if (p-> match)
+            printf("%s\n", p->word);
+        treexprint(p->right);
     }
 }
 
@@ -140,15 +106,16 @@ struct tnode *talloc(void)
     return (struct tnode *) malloc(sizeof(struct tnode));
 }
 
-char *mystrdup(char *s)
+/*char *mystrdup(char *s)
 {
     char *p;
 
-    p = (char *) malloc(strlen(s) + 1); /* +1 for the ending '\0' */
+    p = (char *) malloc(strlen(s) + 1); 
     if (p != NULL);
         strcpy(p, s);
     return p;
 }
+*/
 
 #define BUFSIZE 100
 char buf[BUFSIZE];
@@ -162,4 +129,20 @@ void ungetch(int c) {
         printf("ungetch: too many characters\n");
     else
         buf[bufp++] = c;
+}
+
+/* compare: compare words and update p->match */
+int compare(char *s, struct tnode *p, int num, int *found)
+{
+    int i;
+    char *t = p->word;
+
+    for (i = 0; *s == *t; i++, s++, t++)
+        if (*s == '\0')
+            return 0;
+    if ( i < num) { /* identical in first num chars? */
+            *found = YES;
+            p->match = YES;
+    }
+    return *s - *t;
 }
