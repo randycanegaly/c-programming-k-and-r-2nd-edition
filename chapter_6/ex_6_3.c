@@ -4,8 +4,6 @@
 #include <stdlib.h>
 
 #define MAXWORD 100
-#define YES     1
-#define NO      0
 
 /*
 Write a cross referencer that prints a list of all words in a document
@@ -15,8 +13,8 @@ Remove noise words like "the", "and", etc.
 
 struct linkedlist {
     int lnum;
-    struct tnode *next;
-}
+    struct linkedlist *next;
+};
 
 struct tnode {
     char *word;
@@ -25,134 +23,94 @@ struct tnode {
     struct tnode *right;
 };
 
-struct tnode *addtreex(struct tnode *, char *, int, int *);
+struct tnode *addtreex(struct tnode *, char *, int);
 void treexprint(struct tnode *);
 int getword(char *, int);
+int noiseword(char *);
 
-int main(int argc, char *argv[]) {
+int main(void) {
     struct tnode *root;
     char word[MAXWORD];
+    int linenum = 1;
 
     root = NULL;
-    while (getword(word, MAXWORD) != EOF) {
-        if (isalpha(word[0]) && strlen(word) >= num)
-            root = addtreex(root, word, num);
-        found = NO;
-    }
+    while (getword(word, MAXWORD) != EOF) 
+        if (isalpha(word[0]) && noiseword(word) == -1) 
+            root = addtreex(root, word, linenum);
+        else if (word[0] == '\n') {
+            linenum++;
+        }
+    
     treexprint(root);
     return 0;
 }
 
+struct tnode *talloc(void);
+struct linkedlist *lalloc(void);
+void addln(struct tnode *, int);
+
 /* addtree: add a node with w, at or below p */
-struct tnode *addtreex(struct tnode *p, char *w, int num) {
+struct tnode *addtreex(struct tnode *p, char *w, int linenum) {
     int cond;
 
-    if (p == NULL) { //base case. this is a new word, the new word occurs on a line in the input
-        //so, we have to know/capture what line of the input we are on
-        //we have to build the new node, create the first linked list struct, put the line number in it
-        //set lines in the new node to point to that linkedlist
-        p = talloc(); //create a new node
+    if (p == NULL) { //base case
+        p = talloc();
         p->word = strdup(w);
-        p->match = *found;
-        p->left = p -> right = NULL;
-    } else if ((cond = compare(w, p, num, found)) == 0)
-        p->left = addtreex(p->left, w, num, found);
-    else if (cond > 0)
-        p->right = addtreex(p->right, w, num, found);
+        p->left = p->right = NULL;
+        p->lines = lalloc();
+        p->lines->next = NULL;
+        p->lines->lnum = linenum;
+    } else if ((cond = strcmp(w, p->word)) == 0) //the word passed in matches this node's word, increment line number
+        addln(p, linenum);
+    else if (cond < 0)
+        p->left = addtreex(p->left, w, linenum);
+    else
+        p->right = addtreex(p->right, w, linenum);
     return p;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* addln: add a line number to the linked list */
+void addln(struct tnode *p, int linenum)
+{
+    struct linkedlist *temp;
+    temp = p->lines; //temp also points to lines so that any changes made with temp will apply to lines
+    while(temp->next != NULL && temp->lnum != linenum) //walk the linked list. stop if hit the end (NULL) or if linenum is already there
+        temp = temp->next;
+    
+    //if reached the end, set lnum in temp to linenum, do nothing if linenum is already there
+    if(temp->lnum != linenum) { //new line number to enter 
+        temp->next = lalloc();
+        temp->next->lnum = linenum;
+        temp->next->next = NULL;//to indicate that this is now the end of the linkedlist
+    }
+}
 
 /* treexprint: in-order print of tree p */
 void treexprint(struct tnode *p)
 {
+    struct linkedlist *temp; 
+
     if (p != NULL) {
         treexprint(p->left);
-        
-        //print the word, then a comma separated list of the line numbers on which the word occurs 
-        printf("%s ", p->word);
-
-        struct linkedlist *line_num = p->lines;
-        while (line_num != NULL) {
-            printf("%d -> ", line_num->lnum);
-            line_num = line_num->next;
-        }
-        
+        printf("%10s ", p->word);
+        for (temp = p->lines; temp != NULL; temp = temp->next)
+            printf("%4d ", temp->lnum);
+        printf("\n");
         treexprint(p->right);
     }
 }
 
+/* talloc: make a tnode */
+struct tnode *talloc(void)
+{
+    return (struct tnode *) malloc(sizeof(struct tnode));
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-struct tnode *talloc(void);
-int compare(char *, struct tnode *, int, int *);
-
+/* lalloc: make a tnode */
+struct linkedlist *lalloc(void)
+{
+    return (struct linkedlist *) malloc(sizeof(struct linkedlist));
+}
 
 /* getword: get next word or character from input */
 int getword(char *word, int lim) {
@@ -160,10 +118,10 @@ int getword(char *word, int lim) {
     void ungetch(int);
     char *w = word;
 
-    while (isspace(c = getch()))
+    while (isspace(c = getch()) && c != '\n')
         ;
     if (c != EOF) 
-        *w++ = c; 
+        *w++ = c;
     if (!isalpha(c)) { 
         *w = '\0';
     return c;
@@ -176,26 +134,6 @@ int getword(char *word, int lim) {
     *w = '\0';
     return word[0];
 }
-
-
-#include <stdlib.h>
-
-/* talloc: make a tnode */
-struct tnode *talloc(void)
-{
-    return (struct tnode *) malloc(sizeof(struct tnode));
-}
-
-/*char *mystrdup(char *s)
-{
-    char *p;
-
-    p = (char *) malloc(strlen(s) + 1); 
-    if (p != NULL);
-        strcpy(p, s);
-    return p;
-}
-*/
 
 #define BUFSIZE 100
 char buf[BUFSIZE];
@@ -211,18 +149,22 @@ void ungetch(int c) {
         buf[bufp++] = c;
 }
 
-/* compare: compare words and update p->match */
-int compare(char *s, struct tnode *p, int num, int *found)
+/* noiseword: identify a word as a noiseword */
+int noiseword(char *w)
 {
-    int i;
-    char *t = p->word;
+    static char *nw[] = {"a", "am", "an", "and", "are", "in", "is", "of", "or", "that", "the", "this", "to"};
+    int cond, mid;
+    int low = 0;
+    int high = sizeof(nw) / sizeof(char *) - 1;
 
-    for (i = 0; *s == *t; i++, s++, t++)
-        if (*s == '\0')
-            return 0;
-    if ( i < num) { /* identical in first num chars? */
-            *found = YES;
-            p->match = YES;
+    while(low <= high) {
+        mid = (low + high) / 2;
+        if((cond = strcmp(w, nw[mid])) < 0)
+            high = mid - 1;
+        else if (cond > 0)
+            low = mid + 1;
+        else
+            return mid;
     }
-    return *s - *t;
+    return -1;
 }
