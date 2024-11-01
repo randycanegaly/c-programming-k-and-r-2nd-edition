@@ -4,20 +4,24 @@
 
 #define HASHSIZE 101
 
-static struct nlist *hashtab[HASHSIZE]; /*pointer table*/
-unsigned hash(char *);
-
-int main(void) {
-
-
-return 0;
-}
-
 struct nlist {
     struct nlist *next; /*next entry in chain*/
     char *name;         /*defined name*/
     char *defn;         /*replacement text*/
 };
+
+static struct nlist *hashtab[HASHSIZE]; /*pointer table*/
+unsigned hash(char *);
+struct nlist *install(char *, char *);
+struct nlist *lookup(char *);
+
+int main(void) {
+    //install one
+    install("bofus", "snork");
+    struct nlist *first = lookup("bofus");
+    printf("%s: %s\n", first->name, first->defn); 
+    return 0;
+}
 
 /* hash: form hash value for string s */
 unsigned hash(char *s) {
@@ -27,9 +31,6 @@ unsigned hash(char *s) {
         hashval = *s + 31 *hashval; //calculate hash
     return hashval % HASHSIZE;
 }
-
-struct nlist *lookup(char *);
-//char *strdup(char *);
 
 /* install: put (name, defn) in hashtab */
 struct nlist *install(char *name, char *defn)
