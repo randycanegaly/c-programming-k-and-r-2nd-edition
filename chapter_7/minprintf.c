@@ -4,9 +4,18 @@
 void minprintf(char *, ...);
 
 int main(void) {
-	minprintf("%d", 101);		
-	minprintf("%f", 101.01);		
-	//minprintf("%s", "hoochie");		
+    char *test1, *test2, *test3, *str;
+    int itest = 101;
+    double dtext = 101.01;
+    
+    test1 = "%d\n";
+    test2 = "%f\n";
+    test3 = "%s\n";
+    str = "Luna";
+
+    minprintf(test1, itest);		
+	minprintf(test2, dtext);		
+	minprintf(test3, str);		
 }
 
 /* minprintf: minimal printf with variable argument list */
