@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-/* cat: diff two files and print the first line where they differ */
+#define MAXLINE 100
+
+/* comp: compare two files and print the first line where they differ */
 int main(int argc, char *argv[]) {
     FILE *fp1, *fp2;
-    char c1, c2; 
-    char *prog = argv[0]; //program name
+    void filecomp(FILE *fp1, FILE *fp2);
 
     if (argc != 3) {
        printf("usage: provide 2 file names as arguments\n"); 
@@ -13,20 +15,38 @@ int main(int argc, char *argv[]) {
     }
     else {
         if ((fp1 = fopen(*++argv, "r")) == NULL) {
-            fprintf(stderr, "%s: can't open %s\n", prog, *argv);
+            fprintf(stderr, "can't open %s\n", *argv);
             exit(1);
-        }
-        if ((fp2 = fopen(*++argv, "r")) == NULL) {
-            fprintf(stderr, "%s: can't open %s\n", prog, *argv);
+        } else if ((fp2 = fopen(*++argv, "r")) == NULL) {
+            fprintf(stderr, "can't open %s\n", *argv);
             exit(2);
-        }
-        while ((c1 = getc(fp1)) != EOF && (c2 = getc(fp2)) != EOF)
-            if (c1 != c2) {
-                printf("files not equal!\n");
-                exit(0);
-            }
-        printf("file are equal!\n");
-        exit(0);
+        } else {
+            filecomp(fp1, fp2);
+            fclose(fp1);
+            fclose(fp2);
+            exit(0);
+        } 
     }
-    exit(0);
+}
+    
+/* compare two file, a line at at time */
+void filecomp(FILE *fp1, FILE *fp2) {
+    char *lp1, *lp2;
+    char line1[MAXLINE], line2[MAXLINE];
+
+    do {
+        lp1 = fgets(line1, MAXLINE, fp1);
+        lp2 = fgets(line2, MAXLINE, fp2);
+
+        if (lp1 == line1 && lp2 == line2) {
+            if (strcmp(line1, line2) != 0) {
+                printf("first difference found, file1 line: %s\n", line1);
+                printf("file2 line: %s\n", line2);
+                lp1 = lp2 = NULL;//so upon loop test, the loop exits
+            }
+        } else if (lp1 != line1 && lp2 == line2) 
+            printf("first file ended at \n%s\n", line1);
+        else if (lp1 != line1 && lp2 == line2)
+            printf("second file ended at \n%s\n", line1);
+    } while (lp1 == line1 && lp2 == line2);
 }
