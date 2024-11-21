@@ -4,7 +4,7 @@
 #define NULL        0
 #endif
 #define EOF         (-1)
-#define BUFSIZ       1024
+#define BUFSIZ      24
 #define OPEN_MAX    20      /* maximum number of files that can be open at one time */
 
 typedef struct _iobuf {
@@ -35,7 +35,26 @@ int _flushbuf(int, FILE *);
 #define ferror(p)   (((p)->flag & _ERR) != 0)
 #define fileno(p)   ((p)->fd)
 
+/* In getc() ....
+ * the buffer is full and holds many characters to read
+ * cnt says how many characters are left in the buffer that haven't been read yet
+ * increment pointer along the buffer, decrementing cnt and returning each character pointed to
+ * when all have been read, cnt will be zero
+ * so call a function that goes back to the file and reads enough characters to fill
+ * the buffer
+ * grabbing hunks of the file and buffering them reduces number of read system call
+ */
 #define getc(p)     (--(p)->cnt >= 0 ? (unsigned char) *(p)->ptr++ : _fillbuf(p))
+
+/* In putc() ....
+ * the buffer is for writing. it starts empty
+ * cnt says how many empty spaces are available in the buffer, it starts = BUFSIZ
+ * every time putc() is called, a character is put in the next open spot in the buffer
+ * and cnt is decremented to show one less open spot available.
+ * when cnt = 0, then there are no more slots in the buffer
+ * flushbuf() is called which will write all the contents of the buffer to the file
+ * and reset all aspects of the buffer to represent an empty buffer, ready for loading
+ */
 #define putc(x,p)   (--(p)->cnt >= 0 ? *(p)->ptr++ = (x) : _flushbuf((x), p))
 
 #define getchar()   getc(stdin)

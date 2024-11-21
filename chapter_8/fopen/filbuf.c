@@ -23,3 +23,14 @@ int _fillbuf(FILE *fp) {
     }
     return (unsigned char) *fp->ptr++;
 }
+
+/* What does _fillbuf() do?
+ * The concept of a buffer exists, the base pointer in FILE points to the start of the buffer
+ * checks for a buffer, if base points to nothing, try to allocate for base
+ * If allocation for base fails, return end of file.
+ * Set the next character pointer to the start of the buffer
+ * read bufsize bytes into base and set the number of bytes read to cnt
+ * set flag to EOF or ERR if cnt is zero-ish
+ * set cnt to zero and return EOF
+ * otherwise all went well, return the value of the first char in buff
+ */
