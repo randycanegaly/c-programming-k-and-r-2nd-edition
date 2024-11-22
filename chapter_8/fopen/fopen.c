@@ -12,21 +12,25 @@ int fflush(FILE *fp);
 
 FILE _iob[OPEN_MAX] = {
     { 0, (char *) 0, (char *) 0, _READ, 0 },
-    { 0, (char *) 0, (char *) 0, _WRITE | _UNBUF, 1 },
+    { 0, (char *) 0, (char *) 0, _WRITE, 1 },
     { 0, (char *) 0, (char *) 0, _WRITE | _UNBUF, 2 }
 };
 
 int main(void) {
     char c;
-    FILE *fp;
+    FILE *fp, *fp_out;
 
     if ((fp = fopen("fone.txt", "r")) == NULL)
         putchar('z');
+    else if ((fp_out = fopen("fout.txt", "w")) == NULL)
+        putchar('o');
     else
         while ((c = getc(fp)) != EOF)
-            putc(c, stdout);
+            //putc(c, stdout);
+            putc(c, fp_out);
    
     fclose(fp);
+    fclose(fp_out);
     return 0;
 }
 

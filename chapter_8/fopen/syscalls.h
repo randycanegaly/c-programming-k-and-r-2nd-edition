@@ -4,7 +4,7 @@
 #define NULL        0
 #endif
 #define EOF         (-1)
-#define BUFSIZ      24
+#define BUFSIZ      1024
 #define OPEN_MAX    20      /* maximum number of files that can be open at one time */
 
 typedef struct _iobuf {
