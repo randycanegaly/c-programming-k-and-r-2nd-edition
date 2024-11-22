@@ -5,11 +5,11 @@
 int _fillbuf(FILE *fp) {
     int bufsize;
 
-    if (fp->flag.isread == 0 || fp->flag.iseof == 1 || fp->flag.iserr == 1)
+    if (fp->flags.is_read == 0 || fp->flags.is_eof == 1 || fp->flags.is_err == 1)
         return EOF;
-    if (fp->flag.isunbuf == 1)
+    if (fp->flags.is_unbuf == 1)
         bufsize = 1;
-    else if (fp->flag.isunbuf == 0)
+    else if (fp->flags.is_unbuf == 0)
         bufsize = BUFSIZ;
     if (fp->base == NULL) /* no buffer yet */
         if ((fp->base = (char *) malloc(bufsize)) == NULL)
@@ -18,9 +18,9 @@ int _fillbuf(FILE *fp) {
     fp->cnt = read(fp->fd, fp->ptr, bufsize);
     if (--fp->cnt < 0) {
         if (fp->cnt == -1)
-            fp->flag.iseof = 1;
+            fp->flags.is_eof = 1;
         else
-            fp->flag.iserr = 1;
+            fp->flags.is_err = 1;
         fp->cnt = 0;
         return EOF;
     }

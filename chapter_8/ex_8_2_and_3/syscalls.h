@@ -7,35 +7,25 @@
 #define BUFSIZ      1024
 #define OPEN_MAX    20      /* maximum number of files that can be open at one time */
 
-struct {
-   unsigned int is_read : 1;
-   unsigned int is_write : 1;
-   unsigned int is_unbuf : 1;
-   unsigned int is_eof : 1;
-   unsigned int is_err : 1;
-} flags;
-
 typedef struct _iobuf {
     int cnt;    /* characters left */
     char *ptr;  /* next character position */
     char *base; /* location of buffer */
-    flags *flag;   /*mode of file access */
+    struct flag_field {
+        unsigned int is_read : 1;
+        unsigned int is_write : 1;
+        unsigned int is_unbuf : 1;
+        unsigned int is_eof : 1;
+        unsigned int is_err : 1;
+    } flags; /* flags for state of the FILE struct */
     int fd;     /* file descriptor */
 } FILE;
+
 extern FILE _iob[OPEN_MAX];
 
 #define stdin   (&_iob[0])
 #define stdout  (&_iob[1])
 #define stderr  (&_iob[2])
-
-/*enum _flags {
-    _READ   = 01,   // file open for reading
-    _WRITE  = 02,   // file open for writing
-    _UNBUF   = 04,  // file is unbuffered
-    _EOF   = 010,   // EOF has occurred on this file
-    _ERR   = 020    // error occurred on this file
-};*/
-
 
 int _fillbuf(FILE *);
 int _flushbuf(int, FILE *);

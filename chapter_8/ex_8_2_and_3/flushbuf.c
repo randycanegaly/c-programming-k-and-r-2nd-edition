@@ -14,24 +14,25 @@ int _flushbuf(int x, FILE *fp) {
     if (fp < _iob || fp >= _iob + OPEN_MAX)//pointer math
         return EOF;
     //check that the file is open for writing
-    if (fp->flag & (_WRITE | _ERR) != _WRITE)
+    if (fp->flags.is_write == 0 || fp->flags.is_err == 1)
         return EOF;
     //determine what buffer size is suppose to be: 1 or 1024
-    bufsize = (fp->flag & _UNBUF) ? 1 : BUFSIZ;
+    bufsize = (fp->flags.is_unbuf == 1) ? 1 : BUFSIZ;
     //check if there's a buffer 
     if (fp->base == NULL) {
         //if not, allocate one. if that fails, return EOF
         if ((fp->base = (char *) malloc(bufsize)) == NULL) {
-            fp->flag |= _ERR;
+            fp->flags.is_err = 1;
             return EOF;
         }            
     } else {//there's already a buffer
         //if there is, how many characters need to be flushed?
         nc = fp->ptr - fp->base; 
         //write that many characters to the file
-        if (write(fp->fd, fp->base, nc) != nc) {//if the number of characters written != number that should've been, return EOF 
-            fp->flag |= _ERR;
-            return _EOF;
+        if (write(fp->fd, fp->base, nc) != nc) {//if the number of characters 
+                                                //written != number that should've been, return EOF 
+            fp->flags.is_err = 1;
+            return EOF;
         }
     }
     //the contents of the buffer have now been written to the file

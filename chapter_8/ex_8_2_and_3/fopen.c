@@ -10,15 +10,10 @@ FILE *fopen(char *name, char* mode);
 int fclose(FILE *fp);
 int fflush(FILE *fp);
 
-/*FILE _iob[OPEN_MAX] = {
-    { 0, (char *) 0, (char *) 0, (struct flags *) { 1, 0, 0, 0, 0 }, 0 },
-    { 0, (char *) 0, (char *) 0, (struct flags *) { 0, 1, 0, 0, 0 }, 1 },
-    { 0, (char *) 0, (char *) 0, (struct flags *) { 0, 1, 1, 0, 0 }, 2 }
-};*/
 FILE _iob[OPEN_MAX] = {
-  { 0, 0, 0, &(flags){ 1, 0, 0, 0, 0 }, 0 },
-  { 0, 0, 0, &(flags){ 1, 0, 0, 0, 0 }, 1 },
-  { 0, 0, 0, &(flags){ 1, 0, 0, 0, 0 }, 2 }
+  { 0, 0, 0, { .is_read = 1 }, 0 },
+  { 0, 0, 0, { .is_write = 1 }, 1 },
+  { 0, 0, 0, { .is_write = 1, .is_unbuf = 1 }, 2 }
 };
 
 int main(void) {
@@ -47,7 +42,7 @@ FILE *fopen(char *name, char* mode) {
     if (*mode != 'r' && *mode != 'w' && *mode != 'a')
         return NULL;
     for (fp = _iob; fp < _iob + OPEN_MAX; fp++)
-        if (fp->flag.isread == 0 && fp->flag.iswrite == 0)
+        if (fp->flags.is_read == 0 && fp->flags.is_write == 0)
             break;  /* found free slot */
     if (fp >= _iob + OPEN_MAX)  /* no free slots */
         return NULL;
@@ -65,10 +60,17 @@ FILE *fopen(char *name, char* mode) {
     fp->fd = fd;
     fp->cnt = 0;
     fp->base = NULL;
-    if (*mode == 'r') 
-        fp->flag.isread = 1;
-    else if (*mode == 'w')
-        fp->flag.iswrite = 1;
+    fp->flags.is_unbuf = 0;
+    fp->flags.is_eof = 0;
+    fp->flags.is_err = 0;
+
+    if (*mode == 'r') {
+        fp->flags.is_read = 1;
+        fp->flags.is_write = 0;
+    } else if (*mode == 'w') {
+        fp->flags.is_read = 0;
+        fp->flags.is_write = 1;
+    }
     return fp;
 }
 
@@ -78,12 +80,12 @@ int fflush(FILE *fp) {
 
     if (fp < _iob || fp >= _iob + OPEN_MAX)
         return EOF;
-    if (fp->flag.iswrite == 1)
+    if (fp->flags.is_write == 1)
         rc = _flushbuf(0, fp);
     fp->ptr = fp->base;
-    if (fp->flag.isunbuf == 1)
+    if (fp->flags.is_unbuf == 1)
         fp->cnt = 1;
-    else if (fp->flag.isunbuf == 0)
+    else if (fp->flags.is_unbuf == 0)
         fp->cnt = BUFSIZ;
     return rc;
 }
@@ -97,8 +99,8 @@ int fclose(FILE *fp) {
         fp->ptr = NULL;
         fp->cnt = 0;
         fp->base = NULL;
-        fp->flag.isread = 0;
-        fp->flag.iswrite = 0;
+        fp->flags.is_read = 0;
+        fp->flags.is_write = 0;
     }
     return rc;
 }
