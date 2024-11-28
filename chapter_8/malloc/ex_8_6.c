@@ -16,17 +16,24 @@ static Header base;//the initial Header, available to all functions throughout t
 static Header *freep = NULL; //pointer to the start of the free list, initially empty
 
 void *rmalloc(unsigned nbytes);
+void *rcalloc(unsigned num, unsigned size);
 
 int main(void) {
-    Header *p;
-    //p = (Header *) rmalloc(16);
-    //p = (Header *) rmalloc(32);
-    //p = (Header *) rmalloc(48);
-    //p = (Header *) rmalloc(481);
-    //p = (Header *) rmalloc(470);
-    p = (Header *) rmalloc(490);
-    printf("returned pointer: %p\n", p);
+    rcalloc(5, 32);
     return 0;
+}
+
+void *rcalloc(unsigned num, unsigned size) {
+    unsigned i, total_bytes;
+    char *p, *q;
+
+    total_bytes = num * size;
+
+    if((p = q = rmalloc(total_bytes)) != NULL)
+        for (i = 0; i < total_bytes; i++)
+            *p++ = 0;//set all data to zero
+
+    return q;//return pointer to the front of the new block of memory for n items
 }
 
 //malloc: general-purpose storage allocator
@@ -61,7 +68,7 @@ void *rmalloc(unsigned nbytes) {
     }
 }
 
-#define NALLOC  32    //minimum number of new memory units to request
+#define NALLOC  1024    //minimum number of new memory units to request
 
 //morecore: ask system for more memory
 static Header *morecore(unsigned nu) {//static - function has internal linkage, is only available within this file, ask for nu new units
