@@ -12,16 +12,22 @@ char *lineptrs[MAXLINES];
 int mygetline(char s[], int maxlen);
 char *alloc(int n);
 int readlines(char *lineptrs[], int maxlines);
-void sort(void);
+void sort(void); // TO DO
 void writelines(char *lineptrs[], int nlines);
 
 int main(void) {
   int nlines;
 
   printf("Enter something.\n");
-  nlines = readlines(lineptrs, MAXLINES);
-  sort();
-  writelines(lineptrs, nlines);
+  // readlines returns -1 on a problem
+  if ((nlines = readlines(lineptrs, MAXLINES)) >= 0) {
+    sort(); // TO DO
+    writelines(lineptrs, nlines);
+    return 0;
+  } else {
+    printf("error: too many lines or allocation problem.\n");
+    return -1;
+  }
 }
 
 int readlines(char *lineptrs[], int maxlines) {
@@ -31,17 +37,20 @@ int readlines(char *lineptrs[], int maxlines) {
   char *allocated;
 
   while ((len = mygetline(makeline, MAXLINE)) > 0) {
-    allocated = alloc(len);
-    makeline[len - 1] = '\0'; // take out the newline
-    strcpy(allocated, makeline);
-    // printf("%s", allocated);
-    lineptrs[nlines++] = allocated;
+    if (nlines > maxlines || (allocated = alloc(len)) == NULL)
+      return -1;
+    else {
+      // don't want newline on every string pointed to
+      makeline[len - 1] = '\0';
+      strcpy(allocated, makeline);
+      lineptrs[nlines++] = allocated;
+    }
   }
 
   return nlines;
 }
 
-void sort(void) {}
+void sort(void) {} // TO DO
 
 void writelines(char *lineptrs[], int nlines) {
   while (nlines-- > 0)
