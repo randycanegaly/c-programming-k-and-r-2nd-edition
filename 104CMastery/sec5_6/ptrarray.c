@@ -7,51 +7,45 @@
 
 static char allocbuf[ALLOCSIZE]; // the store, the buffer
 static char *allocp = allocbuf;  // pointer to next free spot in the buffer
+char *lineptrs[MAXLINES];
+
 int mygetline(char s[], int maxlen);
-
 char *alloc(int n);
-void fun(char *p);
-/*
- * At command line ...
- * Enter a string, newline
- * Enter a string, newline
- * Enter a string, newline
- * Sort strings
- * Print out strings
- */
-
-// strings will be held as pointers to pointers to char
-// iow, array of pointers char
-// while all the strings live in a contiguous array
-// when sorting, only the pointers get moved around, not the strings in
-// their original array
-
-// Build ...
-// skeleton main()
-// prompt for one character input
-// put that character in a homemade contiguous alloc array
+int readlines(char *lineptrs[], int maxlines);
+void sort(void);
+void writelines(char *lineptrs[], int nlines);
 
 int main(void) {
-  int len = 0;
-  int nlines = 0;
+  int nlines;
 
+  printf("Enter something.\n");
+  nlines = readlines(lineptrs, MAXLINES);
+  sort();
+  writelines(lineptrs, nlines);
+}
+
+int readlines(char *lineptrs[], int maxlines) {
+  int len;
+  int nlines = 0;
   char makeline[MAXLINE];
   char *allocated;
-  char *lineptrs[MAXLINES];
-
-  printf("enter something\n");
 
   while ((len = mygetline(makeline, MAXLINE)) > 0) {
-    // printf("string: %s length: %d", makeline, len);
     allocated = alloc(len);
-    memcpy(allocated, makeline, len);
+    makeline[len - 1] = '\0'; // take out the newline
+    strcpy(allocated, makeline);
     // printf("%s", allocated);
     lineptrs[nlines++] = allocated;
   }
 
-  for (int i = 0; i < nlines; i++) {
-    printf("%s", lineptrs[i]);
-  }
+  return nlines;
+}
+
+void sort(void) {}
+
+void writelines(char *lineptrs[], int nlines) {
+  while (nlines-- > 0)
+    printf("%s\n", *lineptrs++);
 }
 
 // provide storage for n chars
